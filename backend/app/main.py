@@ -7,6 +7,7 @@ from datetime import date, datetime
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -123,4 +124,9 @@ def stats():
 
 _dist = os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "dist")
 if os.path.isdir(_dist):
-    app.mount("/", StaticFiles(directory=_dist, html=True), name="ui")
+    app.mount("/assets", StaticFiles(directory=os.path.join(_dist, "assets")), name="assets")
+
+    @app.get("/{path:path}", include_in_schema=False)
+    def spa(path: str):  # client-side routes (react-router) fall back to index.html
+        f = os.path.join(_dist, path)
+        return FileResponse(f if path and os.path.isfile(f) else os.path.join(_dist, "index.html"))
